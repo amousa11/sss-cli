@@ -11,6 +11,7 @@ import (
 
 	"github.com/amousa11/sss"
 	"github.com/amousa11/sss/utils"
+	"github.com/fatih/color"
 
 	"github.com/urfave/cli"
 )
@@ -60,16 +61,20 @@ func generateSharesCLI(c *cli.Context) {
 
 	prime, _ := big.NewInt(1).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
 
-	fmt.Println("FIELD MODULUS =", prime.Text(16))
-	fmt.Println("Generating ", n, "shares with threshold", m, " for recovery:")
+	red := color.New(color.FgRed).SprintFunc()
+	blue := color.New(color.FgBlue).SprintfFunc()
+	green := color.New(color.FgGreen).SprintFunc()
+
+	fmt.Printf("Generating %s shares with threshold %s for recovery:\n", red(n), red(m))
+	blue("FIELD MODULUS =", prime.Text(16))
 	secret, points, e := sss.GenerateShares(m, n, prime)
 	if e != nil {
 		log.Fatal(e.Error())
 	}
-	fmt.Println("Secret : ", secret.Text(16))
+	fmt.Println("Secret : ", red(secret.Text(16)))
 	fmt.Println("Shares : ")
 	for i := 0; i < len(points); i++ {
-		fmt.Println(points[i].X.Text(16), "\t", points[i].Y.Text(16))
+		fmt.Println(blue(points[i].X.Text(16)), "\t", green(points[i].Y.Text(16)))
 		dir := "./shares/"
 		createDirIfNotExist(dir)
 		dir += points[i].X.Text(10)
@@ -103,11 +108,11 @@ func recoverSecretsCLI(c *cli.Context) {
 		yValue, okY := new(big.Int).SetString(yString, 16)
 
 		if !okX {
-			log.Fatal(fmt.Errorf("Error parsing xValue from share: %s", string(dat)))
+			log.Fatal(fmt.Errorf("Error parsing xValue from share %s", shareFiles[i]))
 		}
 
 		if !okY {
-			log.Fatal(fmt.Errorf("Error parsing yValue from share: %s", string(dat)))
+			log.Fatal(fmt.Errorf("Error parsing yValue from share %s", shareFiles[i]))
 		}
 
 		if i == 0 {
@@ -129,8 +134,9 @@ func recoverSecretsCLI(c *cli.Context) {
 	if e != nil {
 		log.Fatal(e.Error())
 	}
-
-	fmt.Printf("Secret successfully recovered from %d shares: %x\n", len(points), recoveredSecret)
+	cyan := color.New(color.FgCyan).SprintFunc()
+	red := color.New(color.FgRed).SprintFunc()
+	fmt.Printf("Secret successfully recovered from %s shares: %s\n", cyan(len(points)), red(recoveredSecret.Text(16)))
 }
 
 func getShareFiles(path string) (out []string) {
